@@ -62,19 +62,16 @@ pushd "$VIVOX_SOURCE_DIR"
 	        COPYFLAGS="-a"
             cp $COPYFLAGS darwin64/SLVoice "$stage_bin_release"
             cp $COPYFLAGS darwin64/*.dylib "$stage_lib_release"
-            if [ -n "${APPLE_SIGNATURE:=""}" -a -n "${APPLE_KEY:=""}" -a -n "${APPLE_KEYCHAIN:=""}" ]; then
-                KEYCHAIN_PATH="$HOME/Library/Keychains/$APPLE_KEYCHAIN"
-                security unlock-keychain -p $APPLE_KEY $KEYCHAIN_PATH
+            if [ -n "${AUTOBUILD_KEYCHAIN_PATH:=""}" -a -n "${AUTOBUILD_KEYCHAIN_ID:=""}" ]; then
                 pushd "$stage_lib_release"
-                    codesign --keychain "$KEYCHAIN_PATH" --force --timestamp --sign "$APPLE_SIGNATURE" libortp.dylib || true
-                    codesign --keychain "$KEYCHAIN_PATH" --force --timestamp --sign "$APPLE_SIGNATURE" libvivoxsdk.dylib || true
+                    codesign --keychain "$AUTOBUILD_KEYCHAIN_PATH" --force --timestamp --sign "$AUTOBUILD_KEYCHAIN_ID" libortp.dylib || true
+                    codesign --keychain "$AUTOBUILD_KEYCHAIN_PATH" --force --timestamp --sign "$AUTOBUILD_KEYCHAIN_ID" libvivoxsdk.dylib || true
                 popd
                 pushd "$stage_bin_release"
-                    codesign --keychain "$KEYCHAIN_PATH" --sign "$APPLE_SIGNATURE" \
+                    codesign --keychain "$AUTOBUILD_KEYCHAIN_PATH" --sign "$AUTOBUILD_KEYCHAIN_ID" \
                         --entitlements "$VIVOX_SOURCE_DIR/darwin64/slvoice.entitlements.plist" \
                         -o "runtime,library" --force --timestamp SLVoice || true
                 popd
-                security lock-keychain $KEYCHAIN_PATH
             else
                 echo "Code signing not configured; skipping codesign."
             fi
